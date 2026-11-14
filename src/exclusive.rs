@@ -75,7 +75,7 @@ impl ExclusiveDevice {
         initialize_mta().ok().map_err(werr)?;
         let enumerator = DeviceEnumerator::new().map_err(werr)?;
         let device = match device_name {
-            None => enumerator.get_default_device(&Direction::Render).map_err(werr)?,
+            None => enumerator.get_default_device(Direction::Render).map_err(werr)?,
             Some(want) => find_render_device(&enumerator, want)?,
         };
         let name = device.get_friendlyname().unwrap_or_else(|_| "(名前不明)".into());
@@ -85,7 +85,7 @@ impl ExclusiveDevice {
         let mut chosen = None;
         let mut last_err = String::new();
         for (container, valid) in candidates {
-            let desired = WaveFormat::new(container, valid, &SampleType::Int, rate_hz as usize, channels, None);
+            let desired = WaveFormat::new(container, valid, SampleType::Int, rate_hz as usize, channels, None);
             match client.is_supported_exclusive_with_quirks(&desired) {
                 Ok(f) => {
                     chosen = Some(f);
@@ -102,7 +102,7 @@ impl ExclusiveDevice {
         let wanted = (3 * min_period / 2).max(100_000);
         let period = client.calculate_aligned_period_near(wanted, Some(128), &fmt).map_err(werr)?;
         client
-            .initialize_client(&fmt, &Direction::Render, &StreamMode::EventsExclusive { period_hns: period })
+            .initialize_client(&fmt, Direction::Render, StreamMode::EventsExclusive { period_hns: period }, None)
             .map_err(|e| OutputError::Stream(format!("排他モードを開始できません(他のアプリが使用中、または排他モードが禁止されています): {e}")))?;
         let event = client.set_get_eventhandle().map_err(werr)?;
         let render = client.get_audiorenderclient().map_err(werr)?;
@@ -122,7 +122,7 @@ impl ExclusiveDevice {
         let mut write = |n: usize, more: &mut bool, written: &mut u64| -> Result<(), OutputError> {
             let mut buf = Vec::with_capacity(n * block);
             *more = fill(n, self.container_bytes, self.channels, &mut buf);
-            self.render.write_to_device(n, &buf, None).map_err(werr)?;
+            self.render.write_to_device(&buf, None).map_err(werr)?;
             *written += n as u64;
             Ok(())
         };
@@ -150,7 +150,7 @@ impl ExclusiveDevice {
 /// 名前の一部に一致する出力デバイスを探す。
 pub fn find_render_device(enumerator: &DeviceEnumerator, want: &str) -> Result<wasapi::Device, OutputError> {
     let want_l = want.to_lowercase();
-    for d in &enumerator.get_device_collection(&Direction::Render).map_err(werr)? {
+    for d in &enumerator.get_device_collection(Direction::Render).map_err(werr)? {
         let d = d.map_err(werr)?;
         if d.get_friendlyname().map(|n| n.to_lowercase().contains(&want_l)).unwrap_or(false) {
             return Ok(d);
@@ -163,9 +163,9 @@ pub fn find_render_device(enumerator: &DeviceEnumerator, want: &str) -> Result<w
 pub fn list_render_devices() -> Result<Vec<(String, bool)>, OutputError> {
     initialize_mta().ok().map_err(werr)?;
     let enumerator = DeviceEnumerator::new().map_err(werr)?;
-    let default = enumerator.get_default_device(&Direction::Render).ok().and_then(|d| d.get_friendlyname().ok());
+    let default = enumerator.get_default_device(Direction::Render).ok().and_then(|d| d.get_friendlyname().ok());
     let mut v = Vec::new();
-    for d in &enumerator.get_device_collection(&Direction::Render).map_err(werr)? {
+    for d in &enumerator.get_device_collection(Direction::Render).map_err(werr)? {
         let d = d.map_err(werr)?;
         if let Ok(n) = d.get_friendlyname() {
             let is_def = default.as_deref() == Some(n.as_str());

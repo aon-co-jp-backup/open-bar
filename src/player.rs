@@ -1423,7 +1423,7 @@ impl Ctx {
 fn default_device_name() -> String {
     use wasapi::{initialize_mta, DeviceEnumerator, Direction};
     let _ = initialize_mta();
-    DeviceEnumerator::new().ok().and_then(|e| e.get_default_device(&Direction::Render).ok()).and_then(|d| d.get_friendlyname().ok()).unwrap_or_default()
+    DeviceEnumerator::new().ok().and_then(|e| e.get_default_device(Direction::Render).ok()).and_then(|d| d.get_friendlyname().ok()).unwrap_or_default()
 }
 
 #[cfg(test)]

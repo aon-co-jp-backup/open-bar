@@ -44,7 +44,7 @@ sonic-rs = "0.5"
 
 
 [target.'cfg(windows)'.dependencies]
-wasapi = "0.26"
+wasapi = "0.27"
 
 # 依存クレート(rubatoのsinc補間など)はdebugビルドでも最適化する(テストが遅すぎるため)
 [profile.dev]

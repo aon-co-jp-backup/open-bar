@@ -19,7 +19,6 @@ use serde::Serialize;
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use wasapi::{initialize_mta, DeviceEnumerator, Direction, SampleType, StreamMode, WaveFormat};
 
 const CH: usize = 2;
@@ -172,11 +171,11 @@ fn capture_loop(name: &str, rate: u32, stop: &AtomicBool, ring: &Mutex<VecDeque<
     let enumerator = DeviceEnumerator::new().map_err(werr)?;
     let device = find_render_device(&enumerator, name)?;
     let mut client = device.get_iaudioclient().map_err(werr)?;
-    let fmt = WaveFormat::new(32, 32, &SampleType::Float, rate as usize, CH, None);
+    let fmt = WaveFormat::new(32, 32, SampleType::Float, rate as usize, CH, None);
     let (_def, min_period) = client.get_device_period().map_err(werr)?;
     // Directionをキャプチャにすると、出力デバイスはループバックとして開かれる。autoconvertで2chへ変換してもらう。
     client
-        .initialize_client(&fmt, &Direction::Capture, &StreamMode::EventsShared { autoconvert: true, buffer_duration_hns: min_period })
+        .initialize_client(&fmt, Direction::Capture, StreamMode::EventsShared { autoconvert: true, buffer_duration_hns: min_period }, None)
         .map_err(werr)?;
     let event = client.set_get_eventhandle().map_err(werr)?;
     let cap = client.get_audiocaptureclient().map_err(werr)?;
@@ -326,9 +325,9 @@ mod tests {
             let mut c = dev.get_iaudioclient().unwrap();
             let mix = c.get_mixformat().unwrap();
             let rate = mix.get_samplespersec() as usize;
-            let fmt = WaveFormat::new(32, 32, &SampleType::Float, rate, 2, None);
+            let fmt = WaveFormat::new(32, 32, SampleType::Float, rate, 2, None);
             let (_d, min) = c.get_device_period().unwrap();
-            c.initialize_client(&fmt, &Direction::Render, &StreamMode::EventsShared { autoconvert: true, buffer_duration_hns: min }).unwrap();
+            c.initialize_client(&fmt, Direction::Render, StreamMode::EventsShared { autoconvert: true, buffer_duration_hns: min }, None).unwrap();
             let ev = c.set_get_eventhandle().unwrap();
             let r = c.get_audiorenderclient().unwrap();
             c.start_stream().unwrap();
@@ -342,7 +341,7 @@ mod tests {
                     buf.extend_from_slice(&v.to_le_bytes());
                     buf.extend_from_slice(&v.to_le_bytes());
                 }
-                r.write_to_device(n, &buf, None).unwrap();
+                r.write_to_device(&buf, None).unwrap();
                 let _ = ev.wait_for_event(200);
             }
             c.stop_stream().ok();
