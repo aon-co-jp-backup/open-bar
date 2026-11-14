@@ -212,3 +212,5 @@ Reading into `serde_json::Value` gives almost no speed-up even with SIMD (188 ms
 - **WASM по-прежнему остаётся технологией для интерфейса.** Изменилось лишь то, что вызываемый им API теперь построен на Connect.
 - Интерфейсы, форма которых задана внешним стандартом (ACME, обратные вызовы OAuth, вебхуки сторонних сервисов, проверки работоспособности, статические файлы, OTLP), остаются обычным HTTP.
 - **Если есть сомнения — выбирайте Connect.**
+
+- **2026-11-14 実機テストは直列で実行すること**: `tests/real_files.rs`の実機デバイスを使うテスト(`interactive_player_*`・`dsd_playback_*`・`no_underruns_*`)は、並列だと同じ音声デバイスを取り合い「Failed to initialize audio client(`0x88890010`)」で失敗する。`cargo test --release --test real_files -- --test-threads=1`で11件全件成功を確認(wasapi 0.27・0.26とも同じ)。`wasapi` 0.27への更新は`4f65b95`。古い録音(`tests/fixtures`のPD音源)のノイズは録音自体のもの(確認音はノイズ無し)。
