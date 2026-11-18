@@ -155,3 +155,9 @@ Reading into `serde_json::Value` gives almost no speed-up even with SIMD (188 ms
 - **WASM по-прежнему остаётся технологией для интерфейса.** Изменилось лишь то, что вызываемый им API теперь построен на Connect.
 - Интерфейсы, форма которых задана внешним стандартом (ACME, обратные вызовы OAuth, вебхуки сторонних сервисов, проверки работоспособности, статические файлы, OTLP), остаются обычным HTTP.
 - **Если есть сомнения — выбирайте Connect.**
+
+
+## HANDOFF 2026-11-18 別アカウントでの再開用 / Resume on another account
+
+**日本語**: v0.1.1 を公開した(deep-link `openbar://`・起動中表示・共有ストリーム常時オープン=出だしノイズ対策。CI全成功、Win/Mac/Linux/ARM64のインストーラー11点)。**未了**: (1) インストーラーでの`openbar://`登録と、Webページ(easy-web.tokyo/open-bar)からの自動起動・「起動中」表示の実機確認(まだ「動く」とは言えない)、(2) 未コミットの作業中変更(映像の位置補正`video_set_offset`・`src/video.rs`・テスト2件。未検証のためv0.1.1には含めていない)、(3) 曲間の隙間・映像表示(open-av)・ASIO DSD・make-diskからのopen-av書き出し。実機テストは`-- --test-threads=1`。リリースはタグ`v*`のpushで発火。
+**English**: v0.1.1 is released (deep-link `openbar://`, running-status presence, always-open shared stream to fix the start-of-playback noise; CI green, 11 installers). **Open**: (1) real-machine check that the installer registers `openbar://` and that the web page (easy-web.tokyo/open-bar) auto-launches the app and shows "running" (not yet verified); (2) uncommitted work-in-progress (video offset `video_set_offset`, `src/video.rs`, 2 tests; not in v0.1.1 because unverified); (3) gapless playback, video (open-av), ASIO DSD, open-av export from make-disk. Run real-device tests with `-- --test-threads=1`. A release fires on pushing a `v*` tag.
