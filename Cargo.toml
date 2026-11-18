@@ -1,6 +1,6 @@
 [package]
 name = "open-bar"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "open-bar: foobar2000-inspired high-resolution audio/video player core (PCM/DSD/DoP/MQA-passthrough planning) in Rust"
 license = "MIT OR Apache-2.0"

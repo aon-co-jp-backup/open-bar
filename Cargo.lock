@@ -2716,7 +2716,7 @@ dependencies = [
 
 [[package]]
 name = "open-bar"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cpal",
  "open-audio-sr",
@@ -2735,7 +2735,7 @@ dependencies = [
 
 [[package]]
 name = "open-bar-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "open-bar",
  "serde",
