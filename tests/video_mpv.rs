@@ -3,10 +3,18 @@
 
 use open_bar::video::{spawn_mpv, Correction};
 use std::process::Command;
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
+
+/// 実mpvを使う試験は、同時に走らせるとCPUを取り合って同期の計測がぶれる(WSLで確認)ので、1つずつ動かす。
+static REAL_MPV: Mutex<()> = Mutex::new(());
+fn serial() -> std::sync::MutexGuard<'static, ()> {
+    REAL_MPV.lock().unwrap_or_else(|e| e.into_inner())
+}
 
 #[test]
 fn real_mpv_follows_the_audio_clock_and_resyncs_after_a_jump() {
+    let _serial = serial();
     let Ok(mpv) = std::env::var("OPEN_BAR_MPV") else { return };
     let dir = std::env::temp_dir().join(format!("open_bar_video_{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
@@ -61,6 +69,7 @@ fn real_mpv_follows_the_audio_clock_and_resyncs_after_a_jump() {
 /// mpvの置き場所が間違っている状態→正しい状態に直した、という失敗の再現で確かめる。
 #[test]
 fn follower_retries_after_a_failed_start_instead_of_giving_up() {
+    let _serial = serial();
     use open_bar::player::{PlayState, Player};
     use open_bar::video::VideoFollower;
     let Ok(mpv) = std::env::var("OPEN_BAR_MPV") else { return };
@@ -109,4 +118,37 @@ fn follower_gives_up_after_max_attempts() {
     st.path = Some("y.mp4".into());
     f.step(&st, true);
     assert_eq!(f.attempts, 1);
+}
+
+/// 映像の位置補正(GUIのスライダー)が実mpvで効く: +0.5秒なら、映像は音声より0.5秒先に落ち着く。
+#[test]
+fn real_mpv_settles_at_the_audio_offset() {
+    let _serial = serial();
+    let Ok(mpv) = std::env::var("OPEN_BAR_MPV") else { return };
+    let dir = std::env::temp_dir().join(format!("open_bar_offset_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let video = dir.join("v.mp4").to_string_lossy().into_owned();
+    let out = Command::new("ffmpeg").args(["-y", "-v", "error", "-f", "lavfi", "-i", "testsrc=size=320x240:rate=30:duration=20", "-pix_fmt", "yuv420p", "-c:v", "libx264", &video]).output().unwrap();
+    assert!(out.status.success());
+    let offset = 0.5;
+    let mut m = spawn_mpv(&mpv, &video, 0.0, offset, 15.0, &["--vo=null"]).expect("mpvを起動できる");
+    let t0 = Instant::now();
+    let mut positions = Vec::new();
+    while t0.elapsed() < Duration::from_secs(7) {
+        let t = t0.elapsed().as_secs_f64();
+        m.sync.tick(t, true).expect("tick");
+        if t > 4.0 {
+            if let Ok(Some(v)) = m.sync.ipc.time_pos() {
+                positions.push(v - t);
+            }
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    m.sync.ipc.quit();
+    let _ = m.child.wait();
+    let _ = std::fs::remove_dir_all(&dir);
+    assert!(positions.len() >= 10);
+    let (min, max) = positions.iter().fold((f64::MAX, f64::MIN), |(a, b), &x| (a.min(x), b.max(x)));
+    eprintln!("映像−音声: {min:.3}〜{max:.3} 秒(目標 +{offset})");
+    assert!(min > offset - 0.15 && max < offset + 0.15, "オフセットに落ち着かない: {min:.3}〜{max:.3}");
 }

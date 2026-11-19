@@ -296,6 +296,7 @@ fn render_loop(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
     #[test]
     fn rate_candidates_follow_the_family() {

@@ -15,6 +15,8 @@ struct VideoState {
     /// 埋め込み時の映像の枠(余白の割合 左・右・上・下)
     margins: std::sync::Mutex<[f64; 4]>,
     embedded: std::sync::atomic::AtomicBool,
+    /// 映像の位置補正(ミリ秒。正なら映像を音声より先へ)
+    offset_ms: std::sync::atomic::AtomicI64,
 }
 
 use tauri::{Emitter, Manager, State};
@@ -127,6 +129,11 @@ fn video_set_enabled(v: State<std::sync::Arc<VideoState>>, on: bool) {
 fn video_set_rect(v: State<std::sync::Arc<VideoState>>, left: f64, right: f64, top: f64, bottom: f64) {
     *v.margins.lock().unwrap() = [left, right, top, bottom];
 }
+/// 映像の位置補正(ミリ秒)。口の動きと音がずれて見えるときの微調整。
+#[tauri::command]
+fn video_set_offset(v: State<std::sync::Arc<VideoState>>, ms: i64) {
+    v.offset_ms.store(ms.clamp(-2000, 2000), std::sync::atomic::Ordering::Relaxed);
+}
 /// 映像をアプリの窓へ埋め込んでいるか(していなければ別窓)。
 #[tauri::command]
 fn video_embedded(v: State<std::sync::Arc<VideoState>>) -> bool {
@@ -216,6 +223,7 @@ fn main() {
                 loop {
                     let st = handle.state::<Player>().status();
                     f.margins = *vs.margins.lock().unwrap();
+                    f.offset_secs = vs.offset_ms.load(std::sync::atomic::Ordering::Relaxed) as f64 / 1000.0;
                     f.step(&st, !vs.disabled.load(std::sync::atomic::Ordering::Relaxed));
                     vs.open.store(f.is_open(), std::sync::atomic::Ordering::Relaxed);
                     if *vs.error.lock().unwrap() != f.last_error {
@@ -229,7 +237,7 @@ fn main() {
         })
         .manage(Player::new())
         .manage(std::sync::Arc::new(VideoState::default()))
-        .invoke_handler(tauri::generate_handler![probe_file, scan_folder, startup_files, player_set_playlist, player_play, player_pause, player_resume, player_stop, player_next, player_prev, player_seek, player_set_volume, player_status, player_modes, player_set_mode, player_set_filter, player_set_auto_version, player_set_treble_restore, video_set_enabled, video_status, video_set_rect, video_embedded])
+        .invoke_handler(tauri::generate_handler![probe_file, scan_folder, startup_files, player_set_playlist, player_play, player_pause, player_resume, player_stop, player_next, player_prev, player_seek, player_set_volume, player_status, player_modes, player_set_mode, player_set_filter, player_set_auto_version, player_set_treble_restore, video_set_enabled, video_status, video_set_rect, video_embedded, video_set_offset])
         .run(tauri::generate_context!())
         .expect("open-barの起動に失敗しました");
 }

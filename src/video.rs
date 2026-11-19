@@ -26,6 +26,8 @@ pub const DEAD_ZONE_SECS: f64 = 0.040;
 pub const SEEK_THRESHOLD_SECS: f64 = 0.250;
 /// 速度調整の上限(±5%。それ以上は映像の動きが不自然になる)。
 pub const MAX_SPEED_DELTA: f64 = 0.05;
+/// 再生速度を送り直す最小の変化量(0.5%)。
+const SPEED_STEP: f64 = 0.005;
 
 /// ずれから補正を決める(純粋関数)。`drift`は映像の位置 − 音声の位置(正なら映像が進みすぎ)。
 /// `audio_pos`は音声の位置(シークの行き先)。
@@ -211,8 +213,11 @@ impl<R: BufRead, W: Write> VideoSync<R, W> {
                 }
             }
             Correction::Speed(s) => {
-                self.ipc.set_speed(s)?;
-                self.speed = s;
+                // 速度を設定し直すたびにmpvの映像クロックが少し進む(Linuxで確認)ので、ほぼ同じ値は送らない
+                if (s - self.speed).abs() >= SPEED_STEP {
+                    self.ipc.set_speed(s)?;
+                    self.speed = s;
+                }
             }
             Correction::Seek(t) => {
                 self.ipc.seek_absolute(t)?;
@@ -435,13 +440,15 @@ pub struct VideoFollower {
     pub retry_delay: std::time::Duration,
     pub max_attempts: u32,
     pub attempts: u32,
+    /// 音声を映像より何秒遅らせるか(正なら映像を音声より先へ進める)。GUIのスライダー(口の動きと音の微調整)。
+    pub offset_secs: f64,
     retry_at: Option<std::time::Instant>,
     last_want: Option<String>,
 }
 
 impl VideoFollower {
     pub fn new(mpv_path: impl Into<String>) -> Self {
-        Self { mpv_path: mpv_path.into(), current: None, dismissed: None, extra_args: Vec::new(), margins: [0.0; 4], applied_margins: [0.0; 4], last_error: String::new(), retry_delay: std::time::Duration::from_secs(3), max_attempts: 5, attempts: 0, retry_at: None, last_want: None }
+        Self { mpv_path: mpv_path.into(), current: None, dismissed: None, extra_args: Vec::new(), margins: [0.0; 4], applied_margins: [0.0; 4], last_error: String::new(), retry_delay: std::time::Duration::from_secs(3), max_attempts: 5, attempts: 0, offset_secs: 0.0, retry_at: None, last_want: None }
     }
 
     /// 映像ウィンドウが開いているか。
@@ -480,7 +487,7 @@ impl VideoFollower {
         if self.current.is_none() && self.dismissed.as_deref() != Some(path.as_str()) && !waiting {
             match {
                 let extra: Vec<&str> = self.extra_args.iter().map(String::as_str).collect();
-                spawn_mpv(&self.mpv_path, &path, st.position_secs, 0.0, 20.0, &extra)
+                spawn_mpv(&self.mpv_path, &path, st.position_secs, self.offset_secs, 20.0, &extra)
             } {
                 Ok(m) => {
                     self.applied_margins = [0.0; 4];
@@ -502,6 +509,7 @@ impl VideoFollower {
             }
         }
         if let Some((_, m)) = self.current.as_mut() {
+            m.sync.offset_secs = self.offset_secs;
             if self.margins != self.applied_margins {
                 let g = self.margins;
                 if m.sync.ipc.set_margins(g[0], g[1], g[2], g[3]).is_ok() {

@@ -162,6 +162,10 @@ function initFilters() {
   cut.addEventListener("change", () => invoke("player_set_filter", { filter: { custom: parseInt(cut.value, 10) } }));
   $("auto-version").addEventListener("change", (e) => invoke("player_set_auto_version", { on: e.target.checked }));
   $("video-on").addEventListener("change", (e) => invoke("video_set_enabled", { on: e.target.checked }));
+  $("video-offset").addEventListener("input", (e) => {
+    $("video-offset-val").textContent = `${e.target.value > 0 ? "+" : ""}${e.target.value} ms`;
+    invoke("video_set_offset", { ms: parseInt(e.target.value, 10) });
+  });
   $("treble-restore").addEventListener("change", (e) => invoke("player_set_treble_restore", { on: e.target.checked }));
   const box = $("filter-buttons");
   for (const f of FILTERS) {

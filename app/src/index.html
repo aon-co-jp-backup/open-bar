@@ -49,6 +49,9 @@
     </section>
     <section class="filterbar">
       <label><input type="checkbox" id="video-on" checked /> 映像を表示(MP4/MKVなど。mpvが必要) / Show video (MP4/MKV…; needs mpv)</label>
+      <label class="vol" title="映像を音声より先へ(+)/遅らせる(−) / Shift the video ahead (+) or behind (−) of the audio">
+        映像の位置 / Video offset <input id="video-offset" type="range" min="-500" max="500" step="10" value="0" /> <span id="video-offset-val">0 ms</span>
+      </label>
       <span class="filter-desc" id="video-msg">音声が時間の基準で、映像が追従します / Audio is the clock; video follows</span>
     </section>
     <section class="filterbar">

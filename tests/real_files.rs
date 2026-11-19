@@ -323,3 +323,52 @@ fn vorbis_decode_has_the_same_frame_count_and_start_as_before() {
     assert!(head > 0.3, "先頭に無音の助走が付いている: {head}");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// 曲間ギャップレスを実デバイスで確かめる: 3曲(各2秒)を続けて再生し、曲が替わる間に停止・無音の隙間・音切れが出ないこと。
+/// 隙間があれば、曲の切り替えにかかる実時間が曲の長さ(2.0秒)より長くなる(以前は100ms周期の検知+読み込み+先読み待ちで延びた)。
+#[test]
+fn gapless_track_change_on_the_real_device_has_no_stop_and_no_extra_time() {
+    use open_bar::player::{PlayState, Player};
+    if !ffmpeg_ok() || cpal::traits::HostTrait::default_output_device(&cpal::default_host()).is_none() {
+        return;
+    }
+    let dir = tmpdir("gapless_dev");
+    let files: Vec<String> = ["a.flac", "b.flac", "c.flac"].iter().map(|f| make(&dir, f, &["-c:a", "flac"])).collect();
+    let p = Player::new();
+    p.set_volume(0.05);
+    p.set_playlist(files);
+    p.play(0);
+    let t0 = std::time::Instant::now();
+    let mut seen_at: [Option<f64>; 3] = [None; 3];
+    let mut stopped_midway = false;
+    let mut last = p.status();
+    while t0.elapsed().as_secs_f64() < 30.0 {
+        let s = p.status();
+        if s.state == PlayState::Playing {
+            if let Some(i) = s.index {
+                if i < 3 && seen_at[i].is_none() && s.position_secs < 1.0 {
+                    seen_at[i] = Some(t0.elapsed().as_secs_f64());
+                }
+            }
+        }
+        // 1曲目が鳴り出してから3曲目が鳴り出すまでの間に、止まったり曲番号が消えたりしない
+        if seen_at[0].is_some() && seen_at[2].is_none() && (s.state != PlayState::Playing || s.index.is_none()) {
+            stopped_midway = true;
+        }
+        last = s;
+        if seen_at[2].is_some() && last.position_secs > 0.5 {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    p.stop();
+    let (a, b, c) = (seen_at[0], seen_at[1], seen_at[2]);
+    eprintln!("曲の開始(秒): {a:?} {b:?} {c:?} / 音切れ={}", last.underrun_frames);
+    assert!(a.is_some() && b.is_some() && c.is_some(), "3曲とも鳴る: {a:?} {b:?} {c:?} {}", last.message);
+    assert!(!stopped_midway, "曲間で停止・曲番号の消失が起きた");
+    let (d1, d2) = (b.unwrap() - a.unwrap(), c.unwrap() - b.unwrap());
+    // 各2.0秒。判定は5ms周期の観測なので、±0.15秒まで許す(隙間があれば+0.1〜0.8秒ほど延びる)
+    assert!((d1 - 2.0).abs() < 0.15 && (d2 - 2.0).abs() < 0.15, "曲の切り替えに余計な時間: {d1:.3}秒 {d2:.3}秒");
+    assert_eq!(last.underrun_frames, 0, "曲間で音切れ(リング枯渇)");
+    let _ = std::fs::remove_dir_all(&dir);
+}
