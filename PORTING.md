@@ -1,5 +1,24 @@
 ﻿# PORTING
 
+<!-- plain-language-2026-11-19 -->
+## やさしい説明(引っ越し・再開のしかた)
+
+1. リポジトリを取ってくる(`git clone https://github.com/aon-co-jp/open-bar`)。
+2. Rust と Node.js を入れる。映像を試すなら mpv も入れる。
+3. `cargo test --release --lib` で単体テスト、実機テストは `cargo test --release --test real_files -- --test-threads=1`。
+4. 続きは、下の「再開用メッセージ」から。
+
+**いまの未了(やさしく)**: ① 曲と曲のあいだのすき間をなくす、② 映像の表示をもっと使いやすく(open-av の再生を含む)、③ ASIO の DSD、④ make-disk から open-av を書き出す機能、⑤ macOS・Linux での実機確認。
+
+## In plain words (how to move and resume)
+
+1. Get the repository (`git clone https://github.com/aon-co-jp/open-bar`).
+2. Install Rust and Node.js. Install mpv too if you want to try video.
+3. Unit tests: `cargo test --release --lib`. Real-device tests: `cargo test --release --test real_files -- --test-threads=1`.
+4. Continue from the "Resume message" below.
+
+**What is still open (simply)**: (1) remove the small gap between tracks; (2) make video display easier to use (including open-av playback); (3) ASIO DSD; (4) exporting open-av from make-disk; (5) real macOS and Linux checks.
+
 - 2026-09-20: 初版(再生エンジン中核)。次はCLAUDE.mdのHANDOFFを参照。
 
 ## JSON処理の使用方針: `parse_secure_sonic`(速い型+安全)と`sonic-rs`は使える所では全て使う(2026-10-14、ユーザー指示)

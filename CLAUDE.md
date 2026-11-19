@@ -1,5 +1,32 @@
 # open-bar 開発メモ(CLAUDE.md)
 
+<!-- plain-language-2026-11-19 -->
+## やさしい説明(次に作業する人・AI へ)
+
+**open-bar は、音質を最優先にしたプレーヤーです。** 守ってほしいこと:
+
+1. **音が出るテストは、本物の機械で。** 実機テストは同じ音の機械を取り合うので、`-- --test-threads=1`(1つずつ)で動かします。
+2. **MQA は中身を取り出さない。** 特許のある技術なので、そのまま渡す判断だけをします。
+3. **未コミットの作業は勝手に捨てない。** 他の人の作業中かもしれません。
+4. **リリースはタグ `v*` を push したときだけ始まります。**
+
+### 専門家向けの要点
+- 再生モード: A=共有、B=排他、E=排他+アップサンプル、D=DoP。アップサンプルのフィルターは標準・シャープ・ソフトとカットオフ指定。
+- 映像の位置補正(±500 ms)と、速度補正の送りすぎ防止を追加(単体 43 件・mpv 連携 4 件で確認)。
+
+## In plain words (for the next person or AI)
+
+**open-bar is a player that puts sound quality first.** Please keep these rules:
+
+1. **Test sound on a real device.** Real-device tests fight over the same sound device, so run them with `-- --test-threads=1` (one at a time).
+2. **Never unpack MQA.** It is a patented technology; only decide whether to pass it through.
+3. **Do not throw away uncommitted work.** Someone else may be in the middle of it.
+4. **A release starts only when a `v*` tag is pushed.**
+
+### Key points for experts
+- Playback modes: A = shared, B = exclusive, E = exclusive + upsampling, D = DoP. Upsampling filters: standard, sharp, soft, plus a custom cutoff.
+- Added a video offset (+/-500 ms) and a guard against re-sending nearly identical speed corrections (43 unit tests and 4 mpv integration tests pass).
+
 開発方針・ルールの正本は [`open-raid-z/CLAUDE.md`](https://github.com/aon-co-jp/open-raid-z)。
 
 ## このリポジトリの役割

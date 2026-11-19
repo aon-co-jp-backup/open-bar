@@ -2,6 +2,37 @@
 
 [English](#english) / 日本語
 
+<!-- plain-language-2026-11-19 -->
+## やさしい説明(子どもにも)
+
+**open-bar は「いい音で音楽を聴くためのプレーヤー」です。**
+
+- 音楽のファイルをならべて、順番に再生できます。ふつうの音(MP3 や FLAC など)も、とても細かい音の DSD も扱えます。
+- **機械に音をそのまま渡す**「排他モード」や、**DSD を機械へそのまま届ける** DoP(ディーオーピー)というしくみを使えます。DAC(音をスピーカー用の電気に変える機械)が対応していれば、音がよりきれいになります。
+- ホームページ(easy-web.tokyo/open-bar)では、ブラウザだけでも再生できます。パソコンにインストールしてあれば、ページを開くだけでアプリが自動で立ち上がり、「起動中」と表示されます(スマホ・タブレット版はまだありません)。
+- 映像つきのファイルは、別のソフト mpv を使って音にあわせて映します。
+
+**正直なお知らせ**: MQA(特許のある音の技術)は、中身を取り出しません。MQA に対応した機械へ、そのまま渡すかどうかを決めるだけです。
+
+### 専門家向けの要点
+- v0.1.1: `openbar://launch?token=…`(deep-link + single-instance)、約 10 秒ごとの心拍(端末名・版・状態のみ、曲名は送らない)、共有ストリームの常時オープン(再生開始ノイズ対策)。
+- Windows でインストール版の起動・プロトコル登録・サーバー側の「起動中」表示まで実機で確認済み(2026-11-19)。
+
+## In plain words (for everyone, kids too)
+
+**open-bar is a music player made for listening in high quality.**
+
+- Line up music files and play them one after another. It handles ordinary sound (MP3, FLAC, ...) and very fine sound called DSD.
+- It can hand the sound **straight to the device** ("exclusive mode") and send **DSD to the device untouched** with a method called DoP. If your DAC (the gadget that turns digital sound into signals for speakers) supports it, the sound can be cleaner.
+- On the website (easy-web.tokyo/open-bar) you can also play in the browser alone. If the app is installed, just opening the page starts it and shows "running" (phone and tablet apps do not exist yet).
+- For files with video, it uses a separate program, mpv, and keeps the picture in step with the sound.
+
+**An honest note**: MQA (a patented audio technology) is never unpacked. open-bar only decides whether to pass it through, untouched, to a device that supports MQA.
+
+### Key points for experts
+- v0.1.1: `openbar://launch?token=...` (deep link + single instance), a heartbeat about every 10 s (device name, version and state only; no track names), an always-open shared stream (fixes noise at playback start).
+- Verified on a real Windows machine: launch of the installed app, protocol registration and the server-side "running" status (2026-11-19).
+
 [foobar2000](https://www.foobar2000.org/)(カスタマイズ性と高音質再生で知られる無料プレーヤー)をリスペクトした、**高音質・高画質優先のプレーヤー**をRustで作るプロジェクト。PCM・DSD・Opus・WAV・MP3などの音声と、MP4・MKVなどの動画を、**自由な組み合わせ**(例: MP4動画+DSD音声)で扱い、ハードウェアが対応していればDSD/MQAをそのまま送り、対応していなければ自動でPCMに変換して再生する。
 
 ## ダウンロード / Download
