@@ -119,8 +119,10 @@ mod tests {
         send_beat(&format!("http://127.0.0.1:{port}/api/presence"), "abcdefghijklmnop1234", "playing", "0.1.1").unwrap();
         let req = h.join().unwrap();
         assert!(req.starts_with("POST /api/presence"), "{req}");
+        // ureq 3 は JSON を整形して送るので、空白を除いてから中身を確かめる
+        let compact: String = req.chars().filter(|c| !c.is_whitespace()).collect();
         for needle in ["abcdefghijklmnop1234", "\"device\":\"pc\"", "\"state\":\"playing\"", "0.1.1"] {
-            assert!(req.contains(needle), "{needle} が含まれるはず: {req}");
+            assert!(compact.contains(needle), "{needle} が含まれるはず: {req}");
         }
         assert!(!req.contains("wav") && !req.contains("dsf"), "曲名などは送らない");
     }

@@ -2727,7 +2727,7 @@ dependencies = [
  "rubato",
  "serde",
  "serde_json",
- "sonic-rs 0.5.11",
+ "sonic-rs",
  "symphonia",
  "thiserror 2.0.21",
  "wasapi",
@@ -2740,7 +2740,7 @@ dependencies = [
  "open-bar",
  "serde",
  "serde_json",
- "sonic-rs 0.3.17",
+ "sonic-rs",
  "tauri",
  "tauri-build",
  "tauri-plugin-deep-link",
@@ -2755,7 +2755,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
- "sonic-rs 0.3.17",
+ "sonic-rs",
  "tiny_http",
 ]
 
@@ -3467,12 +3467,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
-name = "ryu"
-version = "1.0.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
-
-[[package]]
 name = "same-file"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3832,26 +3826,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7c350a05f295f922fc153a3af8b443c10db70904a9291a624ddb6058c6110d0"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "sonic-rs"
-version = "0.3.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0275f9f2f07d47556fe60c2759da8bc4be6083b047b491b2d476aa0bfa558eb1"
-dependencies = [
- "bumpalo",
- "bytes",
- "cfg-if",
- "faststr",
- "itoa",
- "ref-cast",
- "ryu",
- "serde",
- "simdutf8",
- "sonic-number",
- "sonic-simd",
- "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -4612,7 +4586,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",
