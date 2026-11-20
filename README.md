@@ -1,0 +1,274 @@
+# open-bar
+
+[English](#english) / 日本語
+
+<!-- plain-language-2026-11-19 -->
+## やさしい説明(子どもにも)
+
+**open-bar は「いい音で音楽を聴くためのプレーヤー」です。**
+
+- 音楽のファイルをならべて、順番に再生できます。ふつうの音(MP3 や FLAC など)も、とても細かい音の DSD も扱えます。
+- **機械に音をそのまま渡す**「排他モード」や、**DSD を機械へそのまま届ける** DoP(ディーオーピー)というしくみを使えます。DAC(音をスピーカー用の電気に変える機械)が対応していれば、音がよりきれいになります。
+- ホームページ(easy-web.tokyo/open-bar)では、ブラウザだけでも再生できます。パソコンにインストールしてあれば、ページを開くだけでアプリが自動で立ち上がり、「起動中」と表示されます(スマホ・タブレット版はまだありません)。
+- 映像つきのファイルは、別のソフト mpv を使って音にあわせて映します。
+
+**正直なお知らせ**: MQA(特許のある音の技術)は、中身を取り出しません。MQA に対応した機械へ、そのまま渡すかどうかを決めるだけです。
+
+### 専門家向けの要点
+- v0.1.1: `openbar://launch?token=…`(deep-link + single-instance)、約 10 秒ごとの心拍(端末名・版・状態のみ、曲名は送らない)、共有ストリームの常時オープン(再生開始ノイズ対策)。
+- Windows でインストール版の起動・プロトコル登録・サーバー側の「起動中」表示まで実機で確認済み(2026-11-19)。
+
+## In plain words (for everyone, kids too)
+
+**open-bar is a music player made for listening in high quality.**
+
+- Line up music files and play them one after another. It handles ordinary sound (MP3, FLAC, ...) and very fine sound called DSD.
+- It can hand the sound **straight to the device** ("exclusive mode") and send **DSD to the device untouched** with a method called DoP. If your DAC (the gadget that turns digital sound into signals for speakers) supports it, the sound can be cleaner.
+- On the website (easy-web.tokyo/open-bar) you can also play in the browser alone. If the app is installed, just opening the page starts it and shows "running" (phone and tablet apps do not exist yet).
+- For files with video, it uses a separate program, mpv, and keeps the picture in step with the sound.
+
+**An honest note**: MQA (a patented audio technology) is never unpacked. open-bar only decides whether to pass it through, untouched, to a device that supports MQA.
+
+### Key points for experts
+- v0.1.1: `openbar://launch?token=...` (deep link + single instance), a heartbeat about every 10 s (device name, version and state only; no track names), an always-open shared stream (fixes noise at playback start).
+- Verified on a real Windows machine: launch of the installed app, protocol registration and the server-side "running" status (2026-11-19).
+
+[foobar2000](https://www.foobar2000.org/)(カスタマイズ性と高音質再生で知られる無料プレーヤー)をリスペクトした、**高音質・高画質優先のプレーヤー**をRustで作るプロジェクト。PCM・DSD・Opus・WAV・MP3などの音声と、MP4・MKVなどの動画を、**自由な組み合わせ**(例: MP4動画+DSD音声)で扱い、ハードウェアが対応していればDSD/MQAをそのまま送り、対応していなければ自動でPCMに変換して再生する。
+
+## ダウンロード / Download
+
+**最新インストーラー(Windows / macOS / Linux): https://github.com/aon-co-jp/open-bar/releases/latest**
+
+## 現状(2026-09-20、初版 = 再生エンジンの中核)
+
+**音声の再生は動きます(CLI)。** 共有モードとWASAPI排他モードのPCM再生は、実機のUSB DAC(MUSE HiFi M3Ultra)で確認しました。DoPは、**D40 PRO(xCORE USB Audio 2.0)で、DSDファイルを聴いて確認**していただきました(「DSD → PCM変換より音が良い」との感想)。非対応DACに送ると大音量のノイズになるので、対応DACでのみ使ってください。ASIOネイティブDSD(Steinbergライセンスが必要なSDK)、画面(UI)、動画表示は次の段階です。
+
+| 機能 | 状態 |
+|---|---|
+| 音声デコード: WAV/FLAC/MP3/AAC(M4A)/ALAC/Vorbis/AIFF/Opus、MKV・MP4・WebM内の音声 | ✅ 実ファイルで確認(1kHz正弦波の振幅・長さを全形式で検証) |
+| DSD: DSF・DSDIFF(非圧縮)の読み込み、DSD→PCM変換、DoP化 | ✅ (`open-mqa-dsd`) 実DSD256でprobe/plan確認 |
+| 再生計画: DSDネイティブ/DoP/PCM自動変換、PCMの上限内での縮小 | ✅ 単体テスト |
+| 音声出力(共有モード): cpal+高品質sincリサンプル | ✅ 実機(デバイスが実時間で消費することを確認: `open-bar play`) |
+| 音声出力(WASAPI排他、ビットパーフェクト) | ✅ 実機のUSB DACで44.1kHz/24bitを確認(`--exclusive`) |
+| DoP出力(排他モード) | ✅ 実機のUSB DAC(D40 PRO)で聴取確認。マーカー位相は出力側で連続して付与(一時停止・シーク・音切れでも崩れない、単体テスト) |
+| ギャップレス連結・ReplayGain(`queue --rg`) | ✅ 実ファイルで隙間なし・-6dBで振幅半分を確認 |
+| 再生モード切替(A排他ビットパーフェクト/B共有+アップサンプル/E排他+アップサンプル/D DoP)+現在のモードを日英で大きく表示 | ✅ 実機で切替・経路表示を確認(DoPの音は未確認) |
+| DSDの逐次変換(全曲の変換を待たない) | ✅ DSD256で再生開始 約35秒→1.6秒 |
+| 画面(GUI、Tauri): プレイリスト・再生/一時停止/停止/前後・シーク・音量・形式/経路表示(日英併記) | ✅ 実アプリで再生を確認(共有モード、逐次リサンプル)。排他/DoPはCLIのみ(UI連携は次) |
+| ASIOネイティブDSD | ❌ 未実装(ASIO SDKのライセンスが必要) |
+| MQA: タグでの判別と、MQA対応DACへのビットパーフェクト素通しの判断 | ✅ 判別・計画のみ(**復号はしない**) |
+| 映像+音声の自由な組み合わせ(`.obar.json`、同名ファイルの自動ペアリング) | ✅ 形式・検証・ペアリング(同期再生は次段階) |
+| WebM内Opusなどsymphoniaが読めない形式 | ffmpegがあればフォールバック(実ファイルで確認) |
+| 高音補正(MP3向け): 既定はリアルタイムEQ、[`open-audio-sr`](https://github.com/aon-co-jp/open-audio-sr)(実在の拡散モデルAudioSR)が使えればAIで実際に高域を復元(バックグラウンド生成→次回再生からキャッシュを使用) | ✅ EQは単体テスト、AI版はopen-audio-sr側で実機検証済み・open-bar組み込みは単体テスト(`ai_treble`) |
+| DST圧縮のDSDIFF | 未対応(明示エラー) |
+
+## MQAについて(正直な開示)
+
+**MQAは復号せず、再実装もしません**(特許・営業秘密で保護された、ロスレスではない非公開技術)。MQA対応DACでMQAを鳴らすには、ソフトは**音量調整・EQ・リサンプル無しのビットパーフェクトのまま素通し**すればよく、展開はDAC側です。open-barは、MQA(タグで判別)をこの条件が満たせるときだけ素通しし、満たせなければ「MQAの展開は行われない通常のPCM」として鳴らし、その理由を表示します。
+
+## 使い方(CLI)
+
+```
+open-bar probe <file>                          ファイル情報(JSON)
+open-bar plan <file> --dsd none|dop|native --max-rate 192000 [--mqa-dac]
+open-bar decode <file> <out.wav>               24bit WAVへ(DSDは自動PCM化)
+open-bar play <file> [--volume V] [--seconds N]  既定デバイスで再生(共有モード。DSDは自動PCM化)
+open-bar play <file> --exclusive [--bits 16|24]  WASAPI排他(Windows、ビットパーフェクト)
+open-bar play <file.dsf> --dop                  DoP(DoP対応DACのみ!非対応だとノイズ)
+open-bar queue [--rg] <file>...                 ギャップレス連続再生(--rg=ReplayGain)
+open-bar pair <folder>                         同名の映像+音声を自動で組み合わせ
+```
+
+## 設計メモ(調査に基づく)
+
+- **デコード**: [symphonia](https://docs.rs/symphonia/)(純Rust)。ただしsymphoniaにDSDデコーダは無く、MKV/WebM内のOpusも読めない → DSDは`open-mqa-dsd`、OpusはRust実装の`opus-pure`(`open-mqa`経由)、残りはffmpegフォールバック。
+- **出力(次段階)**: 先行するRust製プレーヤー([Aqloss](https://github.com/themkoi/Aqloss)、[Moosik](https://github.com/HenloAmHorse/Moosik)、[soul-player](https://github.com/soulaudio/soul-player)、[dsd-rust](https://github.com/xenide/dsd-rust))を参考に、WASAPI排他(DoP)、ASIOネイティブDSD、macOSはDoPのみ。共有モードではDoP・MQAが壊れるため、排他モードを必須にする。
+- **映像(次段階)**: MP4/MKVのコーデックは多様なため、[libmpv](https://lib.rs/crates/tauri-plugin-libmpv)を使う方針(Tauriへの直接埋め込みは難所のため、まずは外部プロセス+JSON IPCで同期を確立)。音声を時間の基準にして映像を追従させる。
+- **エコシステム連携**: `open-cpu`(SIMD検出、DSD→PCM間引きの高速化に使用予定)、`open-cuda`/`open-directx`(FIR間引き・映像処理の並列化候補。ΔΣ変調は直列フィードバックでGPU向きでない)、`aruaru-llm`(ライブラリのタグ整理・検索など補助用途の候補)。いずれも「実測で効くところにだけ」使い、投機的な結線はしない。
+
+## ロードマップ
+
+1. ✅ 音声出力(共有・WASAPI排他・DoP)+ギャップレス+ReplayGain(済)。ASIO DSDは未実装
+2. ✅ UI(Tauri): 初版済み(`app/`、`cargo run -p open-bar-app`)。次: 排他/DoP切替、カスタマイズ、ドラッグ&ドロップ、DSDの逐次変換(現状は変換が終わるまで数十秒待つ)
+3. 映像(libmpv)と音声主導の同期(`Combo`)
+4. `make-disk`との連携(「動画+DSD音声」セットの書き出し)、ライブラリ管理
+
+## 関連
+
+[open-mqa](https://github.com/aon-co-jp/open-mqa) / [open-mqa-dsd](https://github.com/aon-co-jp/open-mqa-dsd) / [make-disk](https://github.com/aon-co-jp/make-disk) / [open-cpu](https://github.com/aon-co-jp/open-cpu)
+
+<a id="english"></a>
+## English
+
+A **quality-first audio/video player** in Rust, in the spirit of [foobar2000](https://www.foobar2000.org/): PCM, DSD, Opus, WAV, MP3 and more, plus MP4/MKV video, in **free combinations** (e.g. MP4 video + DSD audio). If the hardware supports DSD/MQA the stream is sent as is; otherwise DSD is automatically converted to PCM.
+
+**Status (2026-09-20): audio playback works from the CLI.** Shared-mode and WASAPI-exclusive PCM playback are verified on a real USB DAC (MUSE HiFi M3Ultra); gapless queues and ReplayGain work. DoP is implemented but **not yet verified on a DoP-capable DAC** (sending DoP to a non-DoP DAC produces loud noise, so it was not tried). ASIO native DSD (needs Steinberg's SDK licence), the GUI and video display are next.
+
+Verified with real files: WAV/FLAC/MP3/AAC/Vorbis/Opus/MKA plus audio inside MP4/MKV/WebM (1 kHz tone amplitude and duration checked per format); DSF/DSDIFF reading, DSD→PCM and DoP via `open-mqa-dsd` (real DSD256 probed/planned); playback planning (native DSD / DoP / automatic PCM fallback); MQA detection by tag. **MQA is never decoded or reimplemented** (patented, proprietary, not lossless): on an MQA-capable DAC the player only needs to pass the stream bit-perfectly (no volume/EQ/resampling) and the DAC unfolds it; otherwise it plays as ordinary PCM and says why. DST-compressed DSDIFF is refused explicitly. Opus in WebM needs ffmpeg as a fallback.
+
+Roadmap: verify DoP on hardware, UI (Tauri), video via libmpv with audio-master sync, ASIO DSD, make-disk integration.
+
+
+## 聴き比べの結果(2026-09-25、ユーザーの聴取)
+
+DSD256のファイルを聴くと、ノイズは無く、**D(DoP) > E(排他アップサンプル) > B(共有アップサンプル) > A(排他) の順に音が良い**との感想。アップサンプルは標準フィルターが最も良く、ソフト(20kHzで-12dB)は面白みに欠け、シャープは初版で音切れがあった(下記の高速化で修正)。
+
+**性能の実測(音切れの原因と対策)**: 汎用sinc補間は標準フィルターでも実時間の約1.5倍で余裕が無く、音切れ・ノイズの原因だった。整数倍のアップサンプル(44.1k→352.8kなど)をポリフェーズFIRに置き換え、標準は実時間の約10倍、シャープは約4.5倍、ソフトは約15倍になった。実時間に間に合わないフィルターは標準へ自動で切り替える。
+
+## JSON処理の使用方針: `parse_secure_sonic`(速い型+安全)と`sonic-rs`は使える所では全て使う(2026-10-14、ユーザー指示)
+正本は[`RS-JSON`](https://github.com/aon-co-jp/RS-JSON)(`README.md`・`PORTING.md`)。
+
+**方針**: JSONを読む所は、使える所では**全て** `rust-json`(RS-JSON)の `parse_secure_sonic`(`fast`機能、結果は`sonic_rs::Value`)を使う。
+`sonic-rs` を直接使える所(型付き構造体への読み込みなど)も同様。使えない所は `parse_secure`(結果は`serde_json::Value`)を使う。
+外部から来る信頼できない入力(HTTP本文・ネットワーク越しのファイル・アップロード)は、**必ずサイズ・深さ・重複キーの上限つき**で読む。
+
+**実測(7 MB・4万件)**: `serde_json` 200 ms / `parse_secure` 217 ms / **`parse_secure_sonic` 83 ms(約2.4倍速い、防御込み)** / `sonic-rs`そのまま 33 ms(約6倍、防御なし)。
+`serde_json::Value`に読む限りSIMDでもほぼ速くならない(188 ms)。**速さの源は、結果を連続した領域に詰め込む値の型**。
+
+**使える所 / 使えない所**
+- ✅ 読み取り中心で、JSONを大きく・頻繁に読む所(キャッシュJSON、設定、APIの応答、ログ、インデックス)。
+- ✅ 外部からの入力の入口(速さより防御が目的。`parse_secure`でも可)。
+- ⚠️ `serde_json::Value`を関数間で受け渡している既存コードは、型を`sonic_rs::Value`に直す書き換えが要る(`JsonValueTrait`/`JsonContainerTrait`のメソッド)。書き換えずに`serde_json::Value`へ読むと速くならない。
+- ❌ WASM(`rust_json::light`、依存ゼロ)、PHP/JavaScript側のJSON処理(Rustの部品は使えない)。
+- 注意: 依存先の`sonic-rs`は内部で`unsafe`を使う(自前コードに`unsafe`は無い)。小さなJSON(数KB)では体感差が出ない。速度目的の書き換えは、実測で効く所から。
+
+**導入**: `Cargo.toml`に `rust-json = { path = "../RS-JSON", features = ["fast"] }`。使用例は`RS-JSON/README.md`。
+
+**このリポジトリでの適用状況**: 未適用(方針のみ)。コードの切り替えは、JSONを大きく・頻繁に読む所から実測して順に行う。
+
+## JSON handling policy: use `parse_secure_sonic` (fast type + secure) and `sonic-rs` everywhere they can be used (2026-10-14, user instruction)
+The source of truth is [`RS-JSON`](https://github.com/aon-co-jp/RS-JSON) (`README.md`, `PORTING.md`).
+
+**Policy**: wherever JSON is read, use `parse_secure_sonic` from `rust-json` (RS-JSON, the `fast` feature; the result is `sonic_rs::Value`) **everywhere it can be used**.
+Use `sonic-rs` directly where possible too (e.g. reading into typed structs). Where it cannot be used, use `parse_secure` (result: `serde_json::Value`).
+Untrusted input from outside (HTTP bodies, files over the network, uploads) **must always be read with size / depth / duplicate-key limits**.
+
+**Measured (7 MB, 40,000 records)**: `serde_json` 200 ms / `parse_secure` 217 ms / **`parse_secure_sonic` 83 ms (about 2.4x faster, with the defences)** / raw `sonic-rs` 33 ms (about 6x, no defences).
+Reading into `serde_json::Value` gives almost no speed-up even with SIMD (188 ms). **The speed comes from the value type that packs the result into contiguous memory.**
+
+**Where it can / cannot be used**
+- ✅ Read-heavy code that parses large or frequent JSON (cache JSON, config, API responses, logs, indexes).
+- ✅ Entrances for outside input (the goal there is defence rather than speed; `parse_secure` is fine).
+- ⚠️ Existing code that passes `serde_json::Value` between functions needs its type changed to `sonic_rs::Value` (methods from `JsonValueTrait` / `JsonContainerTrait`). Reading into `serde_json::Value` without that change is not faster.
+- ❌ WASM (`rust_json::light`, zero dependencies) and the JSON handling on the PHP / JavaScript side (Rust components cannot be used there).
+- Note: the `sonic-rs` dependency uses `unsafe` internally (our own code has none). For small JSON (a few KB) the difference is not noticeable; do speed-motivated rewrites where measurements show a benefit.
+
+**Adoption**: in `Cargo.toml`, `rust-json = { path = "../RS-JSON", features = ["fast"] }`. Example in `RS-JSON/README.md`.
+
+**Status in this repository**: Not yet applied (policy only). Code will be switched over place by place, starting where measurements show large or frequent JSON reads.
+
+---
+
+作者 / Author: 石 塚 正 浩（MASAHIRO ISHIZUKA） (https://github.com/aon-co-jp)
+
+## API 方針: REST 全廃・gRPC / Connect へ (2026-11-04)
+
+### 日本語
+- **REST は全廃する。新しい API は REST で作らない。** ブラウザや `curl` から呼ぶ API は **Connect の単純呼び出し**(`POST /<パッケージ>.<Service>/<Method>`、`content-type: application/json`、本文は JSON)、サービス間は **gRPC / gRPC-web**(RPoem の管理API `open_runo.admin.v1.Admin` と同じ流儀)。ストリーミングは、必要になってから。
+- **既存の REST は、触るときに順に移す。** 移したら旧 REST の経路は消す。移行が終わるまで残るが、**新規には追加しない**。
+- **JSON は RS-JSON に統一**する(読み込みは `from_str_secure` / `parse_secure` でサイズ・深さ・重複キーの上限つき、書き出しは `rust_json::fast`)。ブラウザの WASM に `prost` は入れない(サイズが増えるため)。
+- **例外(自分たちの API ではなく、相手の規格が決めているもの)**: ACME、OAuth/OIDC のコールバック、第三者(GitHub など)からの Webhook、ヘルスチェック、静的ファイル配信、OTLP など。これらは規格どおりの HTTP を受ける。
+- 参考実装: `RPoem`(`open_runo.admin.v1.Admin`)、`open-easy-web`(`server/src/connect.rs`、`proto/open_easy_web/admin/v1/admin.proto`)。
+- ※ このリポジトリのコードが既に方針どおりかどうかは、各リポジトリの現状による。この節は方針の記録であり、コードの変更を意味しない。
+
+### English
+- **REST is being abolished. New APIs are not built as REST.** APIs called from browsers or `curl` use **Connect unary calls** (`POST /<package>.<Service>/<Method>`, `content-type: application/json`, JSON body); service-to-service calls use **gRPC / gRPC-web** (the same style as RPoem's admin API `open_runo.admin.v1.Admin`). Streaming only when it is actually needed.
+- **Existing REST endpoints are migrated one by one, when they are touched.** The old REST route is removed once migrated. Until migration is finished they remain, but **no new ones are added**.
+- **JSON is unified on RS-JSON**: reading with `from_str_secure` / `parse_secure` (size, depth and duplicate-key limits), writing with `rust_json::fast`. `prost` is not put into browser WASM (it would grow the binary).
+- **Exceptions (shapes dictated by someone else's standard, not our own API)**: ACME, OAuth/OIDC callbacks, webhooks from third parties (e.g. GitHub), health checks, static file serving, OTLP, and so on. These accept plain HTTP as the standard requires.
+- Reference implementations: `RPoem` (`open_runo.admin.v1.Admin`) and `open-easy-web` (`server/src/connect.rs`, `proto/open_easy_web/admin/v1/admin.proto`).
+- Note: whether the code in a given repository already follows this policy depends on that repository. This section records the policy; it does not mean the code has been changed.
+
+### Deutsch (KI-Übersetzung, redaktionell überarbeitet; noch nicht von Muttersprachlern geprüft)
+- **REST wird vollständig abgeschafft; neue APIs entstehen nicht mehr als REST.** APIs, die aus dem Browser oder per `curl` aufgerufen werden, verwenden **unäre Connect-Aufrufe** (`POST /<Paket>.<Service>/<Methode>`, `content-type: application/json`, JSON-Body). Zwischen Diensten kommen **gRPC bzw. gRPC-web** zum Einsatz, im selben Stil wie die Admin-API von RPoem (`open_runo.admin.v1.Admin`). Streaming wird erst ergänzt, wenn es tatsächlich gebraucht wird.
+- **Bestehende REST-Endpunkte werden schrittweise umgestellt, und zwar immer dann, wenn man ohnehin an ihnen arbeitet.** Sobald ein Endpunkt umgestellt ist, wird die alte REST-Route entfernt. Bis zum Abschluss der Migration bleiben die übrigen bestehen, es werden aber **keine neuen mehr hinzugefügt**.
+- **JSON wird einheitlich über RS-JSON verarbeitet**: Gelesen wird mit `from_str_secure` bzw. `parse_secure` (mit Obergrenzen für Größe, Verschachtelungstiefe und doppelte Schlüssel), geschrieben mit `rust_json::fast`. `prost` wird nicht in das Browser-WASM aufgenommen, da es die Datei vergrößern würde.
+- **Ausnahmen (Schnittstellen, deren Form ein fremder Standard vorgibt und die nicht zu unserer eigenen API gehören)**: ACME, OAuth/OIDC-Callbacks, Webhooks von Drittanbietern (z. B. GitHub), Health-Checks, die Auslieferung statischer Dateien, OTLP und Ähnliches. Diese nehmen, wie vom jeweiligen Standard verlangt, gewöhnliches HTTP entgegen.
+- Referenzimplementierungen: `RPoem` (`open_runo.admin.v1.Admin`) und `open-easy-web` (`server/src/connect.rs`, `proto/open_easy_web/admin/v1/admin.proto`).
+- Hinweis: Ob der Code eines einzelnen Repositorys diese Richtlinie bereits erfüllt, hängt vom jeweiligen Repository ab. Dieser Abschnitt dokumentiert lediglich die Richtlinie; er besagt nicht, dass der Code schon angepasst wurde.
+
+### Русский (перевод выполнен с помощью ИИ и отредактирован; носителями языка пока не проверен)
+- **От REST мы полностью отказываемся; новые API больше не создаются в стиле REST.** API, к которым обращаются из браузера или через `curl`, используют **унарные вызовы Connect** (`POST /<пакет>.<Service>/<Method>`, `content-type: application/json`, тело запроса — JSON). Для взаимодействия между сервисами применяются **gRPC и gRPC-web** — в том же стиле, что и административный API RPoem (`open_runo.admin.v1.Admin`). Потоковая передача данных добавляется лишь тогда, когда в ней действительно возникает необходимость.
+- **Существующие REST-эндпоинты переводятся поэтапно — по мере того, как с ними приходится работать.** После перевода старый REST-маршрут удаляется. Пока миграция не завершена, оставшиеся эндпоинты сохраняются, но **новые не добавляются**.
+- **Работа с JSON унифицирована на основе RS-JSON**: чтение — через `from_str_secure` или `parse_secure` (с ограничениями на размер, глубину вложенности и повторяющиеся ключи), запись — через `rust_json::fast`. `prost` в браузерный WASM не включается, поскольку это увеличило бы размер файла.
+- **Исключения (интерфейсы, форму которых определяет чужой стандарт, а не наш собственный API)**: ACME, обратные вызовы OAuth/OIDC, вебхуки сторонних сервисов (например, GitHub), проверки работоспособности, раздача статических файлов, OTLP и тому подобное. Такие интерфейсы принимают обычный HTTP, как того требует соответствующий стандарт.
+- Эталонные реализации: `RPoem` (`open_runo.admin.v1.Admin`) и `open-easy-web` (`server/src/connect.rs`, `proto/open_easy_web/admin/v1/admin.proto`).
+- Примечание: соответствует ли код конкретного репозитория этой политике, зависит от самого репозитория. Данный раздел лишь фиксирует политику и не означает, что код уже изменён.
+
+## API 方針の補足: 用語の整理と使い分け (2026-11-04)
+
+### 日本語
+**1つに統一するものではなく、別の層の話です。** 「REST の代わり」になるのは Connect・gRPC・GraphQL だけで、WASM は画面を作る技術です。
+
+| 用語 | 何か | REST の代わりか |
+|---|---|---|
+| REST | URL と HTTP メソッドで操作を表す API の作り方 | 全廃する側 |
+| **Connect** | `POST /サービス名/メソッド名` に JSON を送る形式。`curl` でもブラウザの `fetch` でも呼べる | はい(**採用**) |
+| **gRPC** | 同じ「サービス/メソッド」の考え方を、バイナリ(protobuf)と HTTP/2 で行う形式。速く、ストリーミングも得意 | はい(**サービス同士に採用**) |
+| gRPC-web | gRPC のブラウザ向けの変形版 | はい(必要なら) |
+| GraphQL | 欲しい項目を問い合わせる形式 | 一部だけ(**問い合わせ(読み取り)専用**) |
+| WASM | Rust をブラウザの中で動かす仕組み | いいえ(画面を作る技術) |
+
+- **ブラウザの画面や `curl` から呼ぶ API は Connect**(POST、JSON を RS-JSON で読み書き)。ブラウザの WASM は素の gRPC を話せず、Connect なら `fetch` のままで、`prost` を足さずに済む(画面のサイズも増えない)。
+- **サービス同士の通信(サーバー間、重い処理、ストリーミング)は gRPC。** 多くは Connect で足りるので、ストリーミングが必要になった所だけ gRPC に上げる。
+- **GraphQL は、まとめて問い合わせたいときの読み取り専用。** 書き込み(操作)には使わない。
+- **WASM は画面を作る技術として、そのまま使う。** 画面から呼ぶ API が Connect になっただけ。
+- 外部の規格が形を決めるもの(ACME、OAuth のコールバック、第三者の Webhook、ヘルスチェック、静的ファイル、OTLP)は、規格どおりの HTTP のまま。
+- **迷ったら Connect。**
+
+### English
+**These are not alternatives to unify; they sit at different layers.** Only Connect, gRPC and GraphQL can replace REST; WASM is a way to build the UI.
+
+| Term | What it is | Replaces REST? |
+|---|---|---|
+| REST | API style that expresses operations through URLs and HTTP methods | The thing being abolished |
+| **Connect** | `POST /Service/Method` with a JSON body; callable from `curl` and from a browser `fetch` | Yes (**adopted**) |
+| **gRPC** | The same service/method idea over binary (protobuf) and HTTP/2; fast, good at streaming | Yes (**for service-to-service**) |
+| gRPC-web | A browser-friendly variant of gRPC | Yes (if needed) |
+| GraphQL | A query language: ask for exactly the fields you want | Partly (**read-only queries**) |
+| WASM | Runs Rust inside the browser | No (a UI technology) |
+
+- **APIs called from browser screens or `curl` use Connect** (POST, JSON read and written with RS-JSON). Browser WASM cannot speak plain gRPC; with Connect it stays a `fetch`, and `prost` is not needed (the binary does not grow).
+- **Service-to-service calls (server to server, heavy work, streaming) use gRPC.** Connect is enough in most places; move a call to gRPC only where streaming is actually needed.
+- **GraphQL is read-only**, for queries that gather several pieces of data. It is not used for writes (operations).
+- **WASM stays as the way to build the UI.** The API it calls simply became Connect.
+- Interfaces whose shape an outside standard dictates (ACME, OAuth callbacks, third-party webhooks, health checks, static files, OTLP) stay plain HTTP.
+- **When in doubt, use Connect.**
+
+### Deutsch (KI-Übersetzung, sprachlich überarbeitet; noch nicht von Muttersprachlern geprüft)
+**Es geht nicht darum, eine einzige Technik auszuwählen – die Begriffe liegen auf unterschiedlichen Ebenen.** Als Ersatz für REST kommen nur Connect, gRPC und GraphQL in Frage; WASM dagegen ist eine Technik, mit der die Benutzeroberfläche gebaut wird.
+
+| Begriff | Was ist das? | Ersatz für REST? |
+|---|---|---|
+| REST | Ein API-Stil, bei dem Operationen über URLs und HTTP-Methoden ausgedrückt werden | wird abgeschafft |
+| **Connect** | `POST /Dienst/Methode` mit JSON im Body; aufrufbar mit `curl` ebenso wie mit `fetch` im Browser | ja (**gewählt**) |
+| **gRPC** | Dasselbe Prinzip aus Dienst und Methode, aber über binäres protobuf und HTTP/2; schnell und gut für Streaming geeignet | ja (**zwischen Diensten**) |
+| gRPC-web | Eine für den Browser angepasste Variante von gRPC | ja (bei Bedarf) |
+| GraphQL | Abfragesprache, mit der man genau die benötigten Felder anfordert | teilweise (**nur für lesende Abfragen**) |
+| WASM | Führt Rust-Code direkt im Browser aus | nein (Technik für die Oberfläche) |
+
+- **APIs, die von Browseroberflächen oder per `curl` aufgerufen werden, verwenden Connect** (POST; JSON wird mit RS-JSON gelesen und geschrieben). WASM im Browser kann kein reines gRPC sprechen. Mit Connect bleibt es bei einem gewöhnlichen `fetch`, und `prost` ist nicht nötig – die WASM-Datei wird dadurch nicht größer.
+- **Für die Kommunikation zwischen Diensten (Server zu Server, rechenintensive Aufgaben, Streaming) wird gRPC eingesetzt.** In den meisten Fällen reicht Connect aus; auf gRPC wird nur dort umgestellt, wo Streaming tatsächlich gebraucht wird.
+- **GraphQL dient ausschließlich lesenden Abfragen**, wenn mehrere Informationen gebündelt abgefragt werden sollen. Für Schreibzugriffe (Operationen) wird es nicht verwendet.
+- **WASM bleibt die Technik für die Oberfläche.** Geändert hat sich lediglich, dass die aufgerufene API nun auf Connect beruht.
+- Schnittstellen, deren Form durch einen externen Standard festgelegt ist (ACME, OAuth-Callbacks, Webhooks von Drittanbietern, Health-Checks, statische Dateien, OTLP), bleiben gewöhnliches HTTP.
+- **Im Zweifel: Connect.**
+
+### Русский (перевод выполнен с помощью ИИ и литературно отредактирован; носителями языка пока не проверен)
+**Это не варианты, из которых нужно выбрать один, а технологии разных уровней.** Заменить REST могут только Connect, gRPC и GraphQL; WASM же — это способ создания пользовательского интерфейса.
+
+| Термин | Что это | Заменяет REST? |
+|---|---|---|
+| REST | Стиль построения API, при котором операции выражаются через URL и HTTP-методы | отменяется |
+| **Connect** | `POST /Сервис/Метод` с телом в формате JSON; вызывается как из `curl`, так и из браузерного `fetch` | да (**выбран**) |
+| **gRPC** | Тот же принцип «сервис — метод», но поверх двоичного формата protobuf и HTTP/2; работает быстро и хорошо подходит для потоковой передачи | да (**для связи между сервисами**) |
+| gRPC-web | Адаптированный для браузера вариант gRPC | да (при необходимости) |
+| GraphQL | Язык запросов: клиент запрашивает ровно те поля, которые ему нужны | частично (**только запросы на чтение**) |
+| WASM | Позволяет выполнять код на Rust прямо в браузере | нет (технология для интерфейса) |
+
+- **API, которые вызываются из браузерных интерфейсов или через `curl`, строятся на Connect** (POST; JSON читается и записывается через RS-JSON). Браузерный WASM не умеет работать с «чистым» gRPC. С Connect достаточно обычного `fetch`, а `prost` не требуется — размер WASM-файла не увеличивается.
+- **Для обмена между сервисами (сервер — сервер, ресурсоёмкие задачи, потоковая передача) применяется gRPC.** В большинстве случаев достаточно Connect; на gRPC переходят только там, где потоковая передача действительно необходима.
+- **GraphQL используется только для чтения**, когда нужно получить сразу несколько связанных данных. Для записи (операций) он не применяется.
+- **WASM по-прежнему остаётся технологией для интерфейса.** Изменилось лишь то, что вызываемый им API теперь построен на Connect.
+- Интерфейсы, форма которых задана внешним стандартом (ACME, обратные вызовы OAuth, вебхуки сторонних сервисов, проверки работоспособности, статические файлы, OTLP), остаются обычным HTTP.
+- **Если есть сомнения — выбирайте Connect.**
